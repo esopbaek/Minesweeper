@@ -1,3 +1,28 @@
+class Board
+  def initialize(width,height,mines)
+    @width = width
+    @height = height
+    @board = Array.new(height) { Array.new(width)}
+    @mines = mines
+    setup
+  end
+  
+  def setup
+    @board.height.times do |x|
+      @board.width.times do |y|
+      end
+    end
+  end
+  
+  
+  
+  
+end
+
+
+
+
+
 class Tile
   
   DELTAS = [[0,1], [0,-1], [1,0], [-1,0], [1,1], [-1,1], [-1,-1], [1,-1]]
@@ -58,19 +83,22 @@ class Tile
     end
   end
   
-  def reveal(pos)
-    if flagged?
-      # Do nothing
-    elsif bombed?
-      @ignited = true
-    elsif neighbor_bomb_count.count > 0
-      
-    end
-    
+  def flag
+    @flagged = true
+    reveal(self.pos)
   end
   
-  
-  
-
-  
+  def reveal(pos)
+    if flagged?
+      display
+    elsif bombed?
+      @ignited = true
+      display
+    elsif neighbor_bomb_count.count > 0
+      display
+    else
+      explore(self)
+    end
+  end
+   
 end

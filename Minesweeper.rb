@@ -27,11 +27,18 @@ class Board
   end
   
   def fill_with_mines
+    get_mine_positions.each do |mine_pos|
+      @board[mine_pos].bombed = true
+    end
+  end
+  
+  def get_mine_positions
     mine_positions = []
-    @mines.times do
+    until mine_positions.count == @mines
       mine = [rand(@height), rand(@width)]
       mine_positions << mine unless mine_positions.include?(mine)
     end
+    mine_positions
   end
   
 end
@@ -45,7 +52,7 @@ class Tile
   DELTAS = [[0,1], [0,-1], [1,0], [-1,0], [1,1], [-1,1], [-1,-1], [1,-1]]
   
   attr_reader :pos
-  attr_accessor :flagged :revealed
+  attr_accessor :flagged :revealed :bombed
   
   def initialize(pos, board)
     @pos = pos
@@ -92,7 +99,7 @@ class Tile
   
   def explore(tile)
     if tile.neighbor_bomb_count > 0
-      tile.reveal
+      tile.reveal(tile.pos)
     else
       tile.neighbors.each do |neighbor|
         explore(@board(neighbor))

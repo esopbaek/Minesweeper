@@ -1,6 +1,39 @@
+class Minesweeper
+  
+  def initialize
+    @board = Board.new(20,20,70)
+  end
+  
+  def play
+    until @board.over
+      coordinates = get_user_coordinates
+      action = get_user_action
+      @board[coordinates].flag if action == 'f'
+      @board[coordinates].reveal if action == 'r'
+      @board.display
+    end
+    @board.display
+    puts "You lose"
+  end
+  
+  def get_user_coordinates
+    puts "Please enter coordinates (x,y)"
+    gets.chomp.split(",").map(&:to_i)
+  end
+  
+  def get_user_action
+    puts "Enter f to flag, r to reveal"
+    action = gets.chomp
+  end
+
+end
+
+
+
+
 class Board
   
-  attr_accessor :board
+  attr_accessor :board, :over
   attr_reader :height, :width
   
   def initialize(width,height,mines)
@@ -8,8 +41,10 @@ class Board
     @height = height
     @board = Array.new(height) { Array.new(width) }
     @mines = mines
+    @over = false
     setup
     display
+
   end
   
   def [](pos)
@@ -60,6 +95,18 @@ class Board
     mine_positions
   end
   
+  def reveal_bombs
+    @board.each do |rows|
+      rows.each do |tile|
+        tile.reveal if tile.bombed
+      end
+    end
+  end
+  
+  def over?
+    @over
+  end
+  
 end
 
 
@@ -105,9 +152,11 @@ class Tile
   def display
     if flagged?
       "F"
+    elsif @board.over && self.bombed && !revealed
+      "X"
     elsif !revealed
       "*"
-    elsif ignited
+    elsif bombed
       "X"
     else
       if neighbor_bomb_count > 0
@@ -143,7 +192,7 @@ class Tile
     if self.flagged?
       display
     elsif self.bombed?
-      @ignited = true
+      @board.over = true
       display
     elsif self.neighbor_bomb_count > 0
       display
@@ -155,5 +204,6 @@ class Tile
 end
 
 if __FILE__ == $PROGRAM_NAME
-  board = Board.new(20,20,70)
+  game = Minesweeper.new
+  game.play
 end

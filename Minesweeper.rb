@@ -7,15 +7,32 @@ class Board
     setup
   end
   
+  def [](pos)
+    x, y = pos[0], pos[1]
+    @board[x][y]
+  end
+  
+  def []=(pos, tile)
+    x, y = pos[0], pos[1]
+    @board[x][y] = tile
+  end
+    
   def setup
     @board.height.times do |x|
       @board.width.times do |y|
+        @board[x, y] << Tile.new([x, y], self)
       end
     end
+    self.fill_with_mines
   end
   
-  
-  
+  def fill_with_mines
+    mine_positions = []
+    @mines.times do
+      mine = [rand(@height), rand(@width)]
+      mine_positions << mine unless mine_positions.include?(mine)
+    end
+  end
   
 end
 

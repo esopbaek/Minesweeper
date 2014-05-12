@@ -10,8 +10,6 @@ class Board
     @mines = mines
     setup
     display
-    p self[[5,5]].reveal
-    display
   end
   
   def [](pos)
@@ -121,12 +119,17 @@ class Tile
   end
   
   def explore(tile)
-    if tile.neighbor_bomb_count > 0 || tile.neighbors.count == 0
-      tile.reveal
-    else
-      neighbor = tile.neighbors.first
-      x,y = neighbor[0], neighbor[1]
-      explore(@board[[x,y]])
+    stack = [tile]
+    until stack.empty?
+      current = stack.shift
+      current.neighbors.each do |pos|
+        if @board[pos].neighbor_bomb_count == 0 && !stack.include?(@board[pos])
+          @board[pos].reveal
+          stack.push @board[pos]
+        elsif @board[pos].neighbor_bomb_count > 0
+          @board[pos].reveal
+        end
+      end
     end
   end
   
@@ -152,5 +155,5 @@ class Tile
 end
 
 if __FILE__ == $PROGRAM_NAME
-  board = Board.new(9,9,10)
+  board = Board.new(20,20,70)
 end

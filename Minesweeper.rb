@@ -150,21 +150,36 @@ class Tile
   end
   
   def display
-    if flagged?
-      "F"
-    elsif @board.over && self.bombed && !revealed
-      "X"
-    elsif !revealed
-      "*"
-    elsif bombed
-      "X"
-    else
-      if neighbor_bomb_count > 0
-        neighbor_bomb_count.to_s
+    if @board.over
+      if self.flagged?
+        "\u2691".encode('utf-8')
+      elsif self.revealed
+        if neighbor_bomb_count > 0
+          neighbor_bomb_count.to_s
+        else
+          "\u00A0".encode('utf-8') # blank
+        end
       else
-        "_"
+        if self.bombed
+          "X" # bomb
+        else
+          "\u204E".encode('utf-8') # asterisk
+        end
       end
-    end
+      
+    else # game not over
+      if self.flagged?
+        "\u2691".encode('utf-8') # flag
+      elsif !revealed
+        "\u204E".encode('utf-8') # asterisk
+      else
+        if neighbor_bomb_count > 0
+          neighbor_bomb_count.to_s
+        else
+          "\u00A0".encode('utf-8') # blank
+        end
+      end
+    end 
   end
   
   def explore(tile)

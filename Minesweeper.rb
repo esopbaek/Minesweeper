@@ -1,10 +1,18 @@
 class Board
+  
+  attr_accessor :board
+  attr_reader :height, :width
+  
   def initialize(width,height,mines)
     @width = width
     @height = height
-    @board = Array.new(height) { Array.new(width)}
+    @board = Array.new(height) { Array.new(width) }
     @mines = mines
+    self[[0,1]] = Tile.new([0,0], self)
     setup
+    display
+    self[[5,5]].reveal
+    display
   end
   
   def [](pos)
@@ -12,23 +20,37 @@ class Board
     @board[x][y]
   end
   
+  
+  
   def []=(pos, tile)
     x, y = pos[0], pos[1]
     @board[x][y] = tile
   end
     
   def setup
-    @board.height.times do |x|
-      @board.width.times do |y|
-        @board[x, y] << Tile.new([x, y], self)
+    @height.times do |x|
+      @width.times do |y|
+        self[[x, y]] = Tile.new([x,y], self)
       end
     end
+    p @board
+
     self.fill_with_mines
+  end
+  
+  def display
+    @height.times do |x|
+      @width.times do |y|
+        print self[[x,y]].display + "  "
+      end
+      puts
+    end
   end
   
   def fill_with_mines
     get_mine_positions.each do |mine_pos|
-      @board[mine_pos].bombed = true
+      x,y = mine_pos[0], mine_pos[1]
+      self[[x,y]].bombed = true
     end
   end
   
@@ -52,7 +74,7 @@ class Tile
   DELTAS = [[0,1], [0,-1], [1,0], [-1,0], [1,1], [-1,1], [-1,-1], [1,-1]]
   
   attr_reader :pos
-  attr_accessor :flagged :revealed :bombed
+  attr_accessor :flagged, :revealed, :bombed
   
   def initialize(pos, board)
     @pos = pos
@@ -77,7 +99,7 @@ class Tile
   
   def neighbor_bomb_count
     count = 0
-    neighbors.each {|neighbor| count += 1 if neighbor.bombed? }
+    neighbors.each {|neighbor| count += 1 if @board[neighbor].bombed? }
     count
   end
   
@@ -102,7 +124,8 @@ class Tile
       tile.reveal(tile.pos)
     else
       tile.neighbors.each do |neighbor|
-        explore(@board(neighbor))
+        x,y = neighbor[0], neighbor[1]
+        explore(@board[x,y])
       end
     end
   end
@@ -112,17 +135,22 @@ class Tile
     reveal(self.pos)
   end
   
-  def reveal(pos)
-    if flagged?
+  def reveal
+    if self.flagged?
       display
-    elsif bombed?
+    elsif self.bombed?
       @ignited = true
       display
-    elsif neighbor_bomb_count.count > 0
+    elsif self.neighbor_bomb_count > 0
       display
     else
       explore(self)
     end
   end
    
+end
+
+if __FILE__ == $PROGRAM_NAME
+  board = Board.new(9,9,10)
+  
 end

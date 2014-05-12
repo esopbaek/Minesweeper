@@ -1,24 +1,86 @@
+require 'colorize'
+require 'yaml'
+
 class Minesweeper
   
   def initialize
-    @board = Board.new(20,20,70)
+    self.play
   end
   
   def play
+    size = get_user_setting
+    @board = Board.new(size, size, size*2)
     until @board.over
       coordinates = get_user_coordinates
       action = get_user_action
       @board[coordinates].flag if action == 'f'
       @board[coordinates].reveal if action == 'r'
       @board.display
+
+      save_prompt
+      load_prompt
     end
+    
     @board.display
     puts "You lose"
   end
   
+  def save_prompt
+    puts "Save game? (y/n)"
+    response = gets.chomp
+    if response == "y"
+      File.open("saved_game.txt", "w") do |f|
+        f.print @board.to_yaml
+      end
+    end
+  end
+  
+  def load_prompt
+    puts "Load game? (y/n)"
+    response = gets.chomp
+    if response == "y"
+      loaded_file = File.readlines("saved_game.txt").join("\n")
+      @board = YAML::load(loaded_file)
+      @board.display
+    end
+
+  end
+  
+  def get_user_setting
+    width = nil
+    until width
+      puts "Enter a size for your playing field (s, m, l)"
+      size = gets.chomp
+      if size == "s"
+        width = 10
+      elsif size == "m"
+        width = 15
+      elsif size == "l"
+        width = 20
+      else
+        puts "Invalid input"
+      end
+    end
+      width
+  end
+  
+
+  
   def get_user_coordinates
-    puts "Please enter coordinates (x,y)"
-    gets.chomp.split(",").map(&:to_i)
+    coordinates = nil
+    until coordinates
+      puts "Please enter coordinates (x,y)"
+      input = gets.chomp.split(",").map(&:to_i)
+
+      if input.any? {|x| x >= @board.width || x < 0}
+        puts "Please enter coordinates between 0 and #{@board.width-1}"
+      elsif @board[[input[0],input[1]]].revealed
+        puts "Square already revealed"
+      else
+        coordinates = input
+      end
+    end
+    coordinates
   end
   
   def get_user_action
@@ -33,7 +95,7 @@ end
 
 class Board
   
-  attr_accessor :board, :over
+  attr_accessor :board, :over, :won
   attr_reader :height, :width
   
   def initialize(width,height,mines)
@@ -42,6 +104,7 @@ class Board
     @board = Array.new(height) { Array.new(width) }
     @mines = mines
     @over = false
+    @won = false
     setup
     display
 
@@ -103,8 +166,22 @@ class Board
     end
   end
   
+  def win_check
+    @board.each do |rows|
+      rows.each do |tile|
+        return false if !tile.revealed && !tile.bombed
+      end
+    end
+    return true
+  end
+  
   def over?
     @over
+  end
+  
+  def won?
+    @over = true if @won
+    @won
   end
   
 end
@@ -155,13 +232,13 @@ class Tile
         "\u2691".encode('utf-8')
       elsif self.revealed
         if neighbor_bomb_count > 0
-          neighbor_bomb_count.to_s
+          neighbor_bomb_count.to_s.blue
         else
           "\u00A0".encode('utf-8') # blank
         end
       else
         if self.bombed
-          "X" # bomb
+          "X".red # bomb
         else
           "\u204E".encode('utf-8') # asterisk
         end
@@ -174,7 +251,7 @@ class Tile
         "\u204E".encode('utf-8') # asterisk
       else
         if neighbor_bomb_count > 0
-          neighbor_bomb_count.to_s
+          neighbor_bomb_count.to_s.blue
         else
           "\u00A0".encode('utf-8') # blank
         end
@@ -214,6 +291,7 @@ class Tile
     else
       explore(self)
     end
+    @board.won = win_check
   end
    
 end
